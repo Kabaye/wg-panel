@@ -11,14 +11,13 @@ optional Telegram notifications.
 - `app.py` - small entrypoint.
 - `wg_panel/` - Flask application package.
 - `wireguard/*.sh` - helper scripts used by the panel to add/list/remove peers.
-- `systemd/wg-panel.service` - systemd unit template.
-- `nginx/*.conf` - nginx reverse proxy and rate-limit templates.
 - `.env.example` - environment file template.
 
 Runtime data is intentionally not versioned:
 
 - `/opt/wg-panel/data/` with users, traffic, device metadata, and Flask secret.
 - `/etc/wireguard/*.key`, `/etc/wireguard/wg0.conf`, and client configs.
+- Web server, TLS, and systemd configuration.
 - TLS private keys and certificates.
 - Python virtual environments and caches.
 
@@ -28,7 +27,7 @@ Run as `root` on the VPN server.
 
 ```bash
 apt-get update
-apt-get install -y python3-venv wireguard qrencode nginx certbot
+apt-get install -y python3-venv wireguard qrencode
 
 git clone git@github.com:Kabaye/wg-panel.git /opt/wg-panel
 python3 -m venv /opt/wg-panel/venv
@@ -56,31 +55,10 @@ At minimum set:
 
 - `WG_PANEL_DOMAIN`
 - `WG_PANEL_ADMIN_PASSWORD` before first startup
-- `WG_PANEL_TELEGRAM_BOT_TOKEN` and `WG_PANEL_TELEGRAM_CHAT_ID`, if Telegram notifications are needed
+- `WG_PANEL_TELEGRAM_BOT_TOKEN` and `WG_PANEL_TELEGRAM_CHAT_ID`, if Telegram notifications are needed.
 
-Install and start the service:
-
-```bash
-cp /opt/wg-panel/systemd/wg-panel.service /etc/systemd/system/wg-panel.service
-systemctl daemon-reload
-systemctl enable --now wg-panel
-systemctl status wg-panel --no-pager
-```
-
-## Nginx
-
-Replace `vpn.example.com` in `nginx/wg-panel.conf` with the real domain, then:
-
-```bash
-cp /opt/wg-panel/nginx/wg-panel-limits.conf /etc/nginx/conf.d/wg-panel-limits.conf
-cp /opt/wg-panel/nginx/wg-panel.conf /etc/nginx/sites-available/wg-panel
-ln -sfn /etc/nginx/sites-available/wg-panel /etc/nginx/sites-enabled/wg-panel
-nginx -t
-systemctl reload nginx
-```
-
-Issue/renew TLS certificates with certbot or another ACME client before enabling
-the HTTPS server block.
+Start the application through the server's deployment layer. Do not store
+server-specific systemd, nginx, TLS, or domain configuration in this repository.
 
 ## Checks
 
